@@ -1,0 +1,37 @@
+{
+  "name": "file-lockdown",
+  "version": "1.0.0",
+  "description": "Library that handle file locking",
+  "keywords": [
+    "file",
+    "lockdown",
+    "lock",
+    "fs",
+    "background",
+    "processes",
+    "net"
+  ],
+  "author": "Manuel Lõhmus <manuel@hauss.ee>",
+  "license": "MIT",
+  "main": "index.min.js",
+  "browser": "browser.js",
+  "files": [
+    "browser.js",
+    "index.js",
+    "index.min.js",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "README.html"
+  ],
+  "homepage": "https://github.com/manuel-lohmus/file-lockdown#readme",
+  "bugs": "https://github.com/manuel-lohmus/file-lockdown/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manuel-lohmus/file-lockdown.git"
+  },
+  "dependencies": {
+    "config-sets": "^2.1.1",
+    "net-fn": "^1.0.2"
+  }
+}

@@ -1,0 +1,1 @@
+throw new Error("'file-lockdown' does not work in the browser.");

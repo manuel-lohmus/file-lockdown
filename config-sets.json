@@ -1,0 +1,12 @@
+{
+  "production": {
+    "isDebug": false,
+    "file_lockdown": {
+      "ipc_port": 8021,
+      "ipc_host": "localhost"
+    }
+  },
+  "development": {
+    "isDebug": true
+  }
+}

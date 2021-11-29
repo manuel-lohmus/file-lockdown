@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>file-lockdown: Library that handle file locking.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./md-styles.css">
+</head>
+<body class="markdown-body">
+    <h1 id="file-lockdown-library-that-handle-file-locking">file-lockdown: Library that handle file locking.</h1>
+<p><a href="https://www.npmjs.com/package/file-lockdown"><img src="https://badgen.net/npm/v/file-lockdown" alt="npm-version" /></a>
+<a href="https://www.npmjs.com/package/file-lockdown"><img src="https://badgen.net/npm/dw/file-lockdown" alt="npm-week-downloads" /></a></p>
+<p>Library that handle file locking.
+Allows you to communicate with background processes over the 'net' module.
+The callback APIs perform all operations asynchronously, without blocking the event loop, then invoke a callback function upon completion or error.</p>
+<h2 id="installing">Installing</h2>
+<p><code>npm install file-lockdown</code></p>
+<h2 id="usage-example">Usage example</h2>
+<pre><code class="language-js">var file_lock = require(&quot;file-lockdown&quot;);
+setTimeout(function () {
+    file_lock.lockAppendFile(&quot;./test.txt&quot;, &quot;1 test\r\n&quot;, function (err) {
+        if (err) { console.error(err); }
+    });
+}, 100);
+</code></pre>
+<h2 id="file-lockdown-reference">'file-lockdown' Reference</h2>
+<pre><code class="language-js">/**
+ * @param {string} filePath
+ * @param {(err:any,data:Buffer)void} callback function(err,data)
+ * @param {string} encoding
+ * @param {number} timeout Default: 200ms
+ */
+function lockReadFile(filePath, callback, encoding = &quot;utf8&quot;, timeout = 200)
+
+/**
+ * @param {string} filePath
+ * @param {Buffer} bufferdata
+ * @param {(err:any)void} callback function(err)
+ * @param {string} encoding
+ * @param {number} timeout Default: 200ms
+ */
+function lockWriteFile(filePath, buffer, callback, encoding = &quot;utf8&quot;, timeout = 200)
+
+/**
+ * @param {string} filePath
+ * @param {(err:any,buf:Buffer,fnWriteClose:(buf:Buffer,isTruncated:boolean, callback:(err:any)void)void)void} fnRead function(err,data,fnWriteClose(buffer))'buffer'dataforwritingandclose|nullforclose
+ * @param {string} encoding
+ * @param {number} timeout Default: 200ms
+ */
+function lockReadWriteFile(filePath, fnRead, encoding = &quot;utf8&quot;, timeout = 200)
+
+/**
+ * @param {string} filePath
+ * @param {Buffer} buffer
+ * @param {(err:any)void} callback function(err)
+ * @param {string} encoding
+ * @param {number} timeout Default: 200ms
+ */
+function lockAppendFile(filePath, buffer, callback, encoding = &quot;utf8&quot;, timeout = 200)
+
+/**
+ * @param {string} filePath
+ * @param {(err:any)void} callback function(err)
+ * @param {number} timeout
+ */
+function lockDeleteFile(filePath, callback, timeout = 200)
+
+/**
+ * @param {string} filePath
+ * @param {string} newPath
+ * @param {(err:any)void} callback
+ * @param {number} timeout
+ */
+function lockRename(filePath, newPath, callback, timeout = 200)
+
+/**
+ * @param {string} dirPath
+ * @param {(err:any)void} callback
+ * @param {number} timeout
+ */
+function lockCreateDir(dirPath, callback, timeout = 200)
+
+/**
+ * @param {string} dirPath
+ * @param {(err:any)void} callback
+ * @param {number} timeout
+ */
+function lockDeleteDir(dirPath, callback, timeout = 200)
+</code></pre>
+<h2 id="license">License</h2>
+<p><a href="LICENSE">MIT</a></p>
+<p>Copyright (c) 2021 Manuel Lõhmus <a href="mailto:manuel@hauss.ee">manuel@hauss.ee</a></p>
+
+</body>
+</html>
