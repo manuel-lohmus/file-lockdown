@@ -355,15 +355,26 @@ var fns = [
     lockDeleteDir
 ];
 
-if (require("worker_threads").isMainThread) {
+var fn_exports = net_fn.connect(fns, options.ipc_port, options.ipc_host);
+Object.keys(fn_exports).forEach(function (key) { exports[key] = fn_exports[key]; });
 
-    var worker = net_fn.tryToRunServer(__filename, options.ipc_port, options.ipc_host);
-    var fn_exports = net_fn.connect(fns, options.ipc_port, options.ipc_host);
 
-    exports.worker = worker;
-    Object.keys(fn_exports).forEach(function (key) { exports[key] = fn_exports[key]; });
-}
-else {
+//console.log("Starting worker!");
+net_fn.tryToRunServer(__filename, options.ipc_port, function (worker) {
 
-    net_fn.createServer(fns, options.ipc_port, options.ipc_host);
-}
+    if (worker) {
+
+        exports.worker = worker;
+    }
+    else {
+
+        //console.log("Starting server!");
+        net_fn.createServer(fns, options.ipc_port, function (server) {
+
+            exports.server = server;
+
+        }, options.ipc_host);
+    }
+
+
+}, options.ipc_host);

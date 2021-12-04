@@ -1,6 +1,6 @@
 {
   "name": "file-lockdown",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library that handle file locking",
   "keywords": [
     "file",
@@ -32,6 +32,6 @@
   },
   "dependencies": {
     "config-sets": "^2.1.1",
-    "net-fn": "^1.0.2"
+    "net-fn": "^1.0.3"
   }
 }
