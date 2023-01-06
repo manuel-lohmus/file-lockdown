@@ -1,12 +1,25 @@
 {
+  "development": {
+    "isDebug": true,
+    "file_lockdown": {
+      "ipc_port": 8021,
+      "ipc_host": "localhost"
+    },
+    "try_to_run": {
+      "retrying": 10,
+      "enabled": true
+    },
+    "profiler": "development"
+  },
   "production": {
     "isDebug": false,
     "file_lockdown": {
       "ipc_port": 8021,
       "ipc_host": "localhost"
+    },
+    "try_to_run": {
+      "retrying": 10,
+      "enabled": true
     }
-  },
-  "development": {
-    "isDebug": true
   }
 }

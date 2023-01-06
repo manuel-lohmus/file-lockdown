@@ -5,6 +5,7 @@
     <Name>file-lockdown</Name>
     <RootNamespace>file-lockdown</RootNamespace>
     <SaveNodeJsSettingsInProjectFile>True</SaveNodeJsSettingsInProjectFile>
+    <Environment>//NODE_ENV=development</Environment>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -12,7 +13,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>95188ddb-8595-48be-b497-5b93d45674bb</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>test.js</StartupFile>
+    <StartupFile>index.test.js</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -39,7 +40,7 @@
       <SubType>Content</SubType>
       <DependentUpon>README.md</DependentUpon>
     </Content>
-    <Content Include="test.js" />
+    <Content Include="index.test.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
   </ItemGroup>
