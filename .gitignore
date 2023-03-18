@@ -364,3 +364,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/bundleconfig.json
+/.gitignore
+/.gitattributes
+/.gitignore
+/file-lockdown.njsproj
+/.gitignore
