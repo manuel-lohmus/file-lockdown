@@ -2,7 +2,7 @@
 
 var test = require('node:test');
 var path = require('node:path');
-var file_lockdown = require("./index.js") || require("./index.min.js");
+var file_lockdown = require("./index.js");
 
 function subtest(t, done, ...arg) {
 

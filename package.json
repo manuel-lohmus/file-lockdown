@@ -1,6 +1,6 @@
 {
   "name": "file-lockdown",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Library that handle file locking",
   "keywords": [
     "file",
@@ -13,7 +13,7 @@
   ],
   "author": "Manuel Lõhmus <manuel@hauss.ee>",
   "license": "MIT",
-  "main": "index.min.js",
+  "main": "index.js",
   "browser": "browser.js",
   "scripts": {
     "test": "node index.test.js"
@@ -21,7 +21,6 @@
   "files": [
     "browser.js",
     "index.js",
-    "index.min.js",
     "index.test.js",
     "LICENSE",
     "package.json",

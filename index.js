@@ -19,52 +19,55 @@ var lockFiles = {};
 /**
  * @param {string} filePath
  * @param {(err:any,callback:(err:any,fnUnlock:()void)void)void} callback function(err,fnUnlock()=>void){...}
- * @param {number} timeout Default :200ms
+ * @param {number} timeout Default: 15000ms
  */
-function lockFile(filePath, callback, timeout = 200) {
+function lockFile(filePath, callback, timeout = 15000) {
 
     if (typeof callback !== "function") return;
 
-    timeout = typeof timeout === "number" && timeout > 0 ? timeout : 200;
+    timeout = typeof timeout === "number" && timeout > 0 ? timeout : 15000;
 
     if (lockFiles[filePath]) {
 
-        //if (lockFiles[filePath] > 5) {
-
-        //    console.info("[ INFO ] 'file-lockdown' File '" + filePath + "' locked. Set timeout: " + timeout + "ms.");
-        //}
-
-        setImmediate(function () { lockFile(filePath, callback, timeout); });
+        lockFiles[filePath].push(callback);
     }
     else {
 
-        lockFiles[filePath] = 1;
+        lockFiles[filePath] = [];
 
-        var interval = setInterval(function () {
+        function fnLock(callback) {
 
-            lockFiles[filePath]++;
+            function fnUnlock() {
 
-            if (lockFiles[filePath] > 20) {
+                if (!callback.timeout) { return; }
 
-                clearInterval(interval);
-                delete lockFiles[filePath];
-                console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
+                clearTimeout(callback.timeout);
+                delete callback.timeout;
+
+                var cb = lockFiles[filePath].shift();
+
+                if (cb) { fnLock(cb); }
+                else { delete lockFiles[filePath]; }
             }
 
-        }, timeout);
+            callback.timeout = setTimeout(function () {
 
-        callback(null, function fnUnlock() {
+                fnUnlock();
+                console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
 
-            clearInterval(interval);
-            delete lockFiles[filePath];
-        });
+            }, timeout);
+
+            setImmediate(function () { callback(null, fnUnlock); });
+        }
+
+        fnLock(callback);
     }
 }
 /**
  * @param {string} filePath
  * @param {(err:any,data:Buffer)void} callback function(err,data)
- * @param {string} encoding
- * @param {number} timeout Default: 200ms
+ * @param {string} encoding Default: "utf8"
+ * @param {number} timeout 
  */
 function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
 
@@ -118,8 +121,8 @@ function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
  * @param {string} filePath
  * @param {Buffer} bufferdata
  * @param {(err:any)void} callback function(err)
- * @param {string} encoding
- * @param {number} timeout Default: 200ms
+ * @param {string} encoding Default: "utf8"
+ * @param {number} timeout 
  */
 function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
 
@@ -162,8 +165,8 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
 /**
  * @param {string} filePath
  * @param {(err:any,buf:Buffer,fnWriteClose:(buf:Buffer,isTruncated:boolean, callback:(err:any)void)void)void} fnRead function(err,data,fnWriteClose(buffer))'buffer'dataforwritingandclose|nullforclose
- * @param {string} encoding
- * @param {number} timeout Default: 200ms
+ * @param {string} encoding Default: "utf8"
+ * @param {number} timeout 
  */
 function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
 
@@ -243,8 +246,8 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
  * @param {string} filePath
  * @param {Buffer} buffer
  * @param {(err:any)void} callback function(err)
- * @param {string} encoding
- * @param {number} timeout Default: 200ms
+ * @param {string} encoding Default: "utf8"
+ * @param {number} timeout 
  */
 function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) {
 
