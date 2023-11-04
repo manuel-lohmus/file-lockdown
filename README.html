@@ -12,7 +12,7 @@
 The library is designed for <a href="https://www.npmjs.com/package/fs-broker">'fs-broker'</a>.
 Allows you to communicate with background processes over the 'net' module.
 The callback APIs perform all operations asynchronously, without blocking the event loop, then invoke a callback function upon completion or error.</p>
-<h2 id="installing">Installing</h2>
+<h2 id="installation">Installation</h2>
 <p><code>npm install file-lockdown</code></p>
 <h2 id="usage-example">Usage example</h2>
 <pre><code class="language-js">var file_lock = require(&quot;file-lockdown&quot;);
@@ -26,9 +26,9 @@ setTimeout(function () {
 <pre><code class="language-js">/**
  * @param {string} filePath
  * @param {(err:any,callback:(err:any,fnUnlock:()void)void)void} callback function(err,fnUnlock()=&gt;void){...}
- * @param {number} timeout Default: 15000ms
+ * @param {number} timeout Default: 500ms
  */
-function lockFile(filePath, callback, timeout = 15000)
+function lockFile(filePath, callback, timeout = 500)
 
 /**
  * @param {string} filePath

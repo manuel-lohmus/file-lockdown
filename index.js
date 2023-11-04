@@ -19,13 +19,13 @@ var lockFiles = {};
 /**
  * @param {string} filePath
  * @param {(err:any,callback:(err:any,fnUnlock:()void)void)void} callback function(err,fnUnlock()=>void){...}
- * @param {number} timeout Default: 15000ms
+ * @param {number} timeout Default: 500ms
  */
-function lockFile(filePath, callback, timeout = 15000) {
+function lockFile(filePath, callback, timeout = 500) {
 
     if (typeof callback !== "function") return;
 
-    timeout = typeof timeout === "number" && timeout > 0 ? timeout : 15000;
+    timeout = typeof timeout === "number" && timeout > 0 ? timeout : 500;
 
     if (lockFiles[filePath]) {
 
@@ -39,25 +39,29 @@ function lockFile(filePath, callback, timeout = 15000) {
 
             function fnUnlock() {
 
-                if (!callback.timeout) { return; }
+                if (callback.timeout === undefined) { return; }
 
                 clearTimeout(callback.timeout);
                 delete callback.timeout;
 
                 var cb = lockFiles[filePath].shift();
 
-                if (cb) { fnLock(cb); }
+                if (cb) { setImmediate(function () { fnLock(cb); }); }
                 else { delete lockFiles[filePath]; }
             }
+            function setWatching() {
 
-            callback.timeout = setTimeout(function () {
+                callback.timeout = setTimeout(function () {
 
-                fnUnlock();
-                console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
+                    console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
+                    //console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! '" + callback.name + "' File '" + filePath + "' callbacks:", lockFiles[filePath].length);
+                    callback("[ ERROR ] 'file-lockdown' File locker problem. Timeout!", fnUnlock);
+                    fnUnlock();
 
-            }, timeout);
+                }, timeout);
+            }
 
-            setImmediate(function () { callback(null, fnUnlock); });
+            setImmediate(function () { setWatching(); callback(null, fnUnlock); });
         }
 
         fnLock(callback);
@@ -71,9 +75,9 @@ function lockFile(filePath, callback, timeout = 15000) {
  */
 function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
 
-    lockFile(filePath, function (err, fnUnlock) {
+    lockFile(filePath, function readFile(err, fnUnlock) {
 
-        if (err) { fnRead(err); fnUnlock(); }
+        if (err) { fnUnlock(); callback(err); }
 
         else {
 
@@ -128,7 +132,7 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
 
     if (buffer !== undefined && buffer !== null) {
 
-        lockFile(filePath, function (err, fnUnlock) {
+        lockFile(filePath, function writeFile(err, fnUnlock) {
 
             if (err) { fnUnlock(); callback(err); }
 
@@ -170,9 +174,12 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
  */
 function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
 
-    lockFile(filePath, function (err, fnUnlock) {
+    lockFile(filePath, function readWriteFile(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) {
+            fnUnlock();
+            callback(err);
+        }
 
         else {
 
@@ -180,41 +187,95 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
 
                 var flag = err ? "w+" : "r+";
 
-                fs.open(filePath, flag, function (err, fd) {
+                function fnOpen(filePath, flag, openCallback) {
 
-                    function close() {
-                        if (typeof fd === "number") { fs.close(fd, function () { fnUnlock(); }); }
-                        else { fnUnlock(); }
-                    }
-                    function fnWriteClose(str, isTruncated, callback) {
+                    fs.open(filePath, flag, function (err, fd) {
 
-                        function write(err) {
+                        function fnClose(closeCallback) {
 
-                            if (err) { close(); callback(err); }
-                            else if (typeof str === 'string') {
-                                fs.write(fd, str, 0, encoding, function (err) {
+                            if (typeof closeCallback !== "function") { closeCallback = function () { }; }
+                            if (typeof fd === "number") {
 
-                                    close();
-                                    callback(err);
+                                fs.close(fd, function (err) {
+                                    closeCallback(err);
                                 });
                             }
-                            else { close(); }
+                            else {
+                                closeCallback(new Error("Error closing file."));
+                            }
                         }
 
-                        if (typeof callback !== "function") { callback = function () { }; }
+                        if (err) {
+                            fnClose();
+                            openCallback(err);
+                        }
+                        else {
+                            openCallback(null, fd, fnClose);
+                        }
+                    });
+                }
+                function fnWriteClose(str, isTruncated, writeCallback) {
 
-                        if (str === null) { fnUnlock(); callback(); }
-                        else if (isTruncated) { fs.ftruncate(fd, 0, write); }
-                        else { write(); }
+                    // Write file
+                    fnOpen(filePath, flag, function (err, fd, fnClose) {
+
+                        if (err) {
+                            fnClose();
+                            fnUnlock();
+                            writeCallback(err);
+                        }
+                        else {
+
+                            function fnWrite(err) {
+
+                                if (err) {
+                                    fnUnlock();
+                                    writeCallback(err);
+                                }
+                                else if (typeof str === 'string') {
+
+                                    fs.write(fd, str, 0, encoding, function (err) {
+
+                                        fnClose();
+                                        fnUnlock();
+                                        writeCallback(err);
+                                    });
+                                }
+                                else {
+                                    fnUnlock();
+                                    writeCallback(new Error("fnWrite error: typeof str === 'string' > " + typeof str));
+                                }
+                            }
+
+                            if (typeof writeCallback !== "function") { writeCallback = function () { }; }
+
+                            if (str === null) {
+                                fnUnlock();
+                                writeCallback();
+                            }
+                            else if (isTruncated) { fs.ftruncate(fd, 0, fnWrite); }
+                            else { fnWrite(); }
+                        }
+                    });
+                }
+
+                // Read file
+                fnOpen(filePath, flag, function (err, fd, fnClose) {
+
+                    if (err) {
+                        fnClose();
+                        fnUnlock();
+                        callback(err);
                     }
-
-                    if (err) { close(); callback(err); }
-
                     else {
 
                         function cb(err, bytesRead, buffer) {
 
-                            if (err) { close(); callback(err); }
+                            if (err) {
+                                fnClose();
+                                fnUnlock();
+                                callback(err);
+                            }
                             else {
 
                                 str += buffer.toString(encoding, 0, bytesRead);
@@ -225,7 +286,7 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                                     fs.read(fd, { position: position }, cb);
                                 }
                                 else {
-
+                                    fnClose();
                                     callback(null, str, fnWriteClose);
 
                                 }
@@ -235,11 +296,10 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                         var str = "", position = 0;
                         fs.read(fd, { position: position }, cb);
                     }
-
                 });
             });
-
         }
+
     }, timeout);
 }
 /**
@@ -253,7 +313,7 @@ function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) 
 
     if (buffer !== undefined && buffer !== null) {
 
-        lockFile(filePath, function (err, fnUnlock) {
+        lockFile(filePath, function appendFile(err, fnUnlock) {
 
             if (err) { fnUnlock(); callback(err); }
 
@@ -298,7 +358,7 @@ function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) 
  */
 function lockDeleteFile(filePath, callback, timeout) {
 
-    lockFile(filePath, function (err, fnUnlock) {
+    lockFile(filePath, function deleteFile(err, fnUnlock) {
 
         if (err) { fnUnlock(); callback(err); }
 
@@ -324,7 +384,7 @@ function lockDeleteFile(filePath, callback, timeout) {
  */
 function lockRename(filePath, newPath, callback, timeout) {
 
-    lockFile(filePath, function (err, fnUnlock) {
+    lockFile(filePath, function rename(err, fnUnlock) {
 
         if (err) { fnUnlock(); callback(err); }
 
@@ -339,12 +399,12 @@ function lockRename(filePath, newPath, callback, timeout) {
 }
 /**
  * @param {string} dirPath
- * @param {(err:any)void} callback
+ * @param {(err:any, pathDir:string)void} callback
  * @param {number} timeout
  */
 function lockCreateDir(dirPath, callback, timeout) {
 
-    lockFile(dirPath, function (err, fnUnlock) {
+    lockFile(dirPath, function createDir(err, fnUnlock) {
 
         if (err) { fnUnlock(); callback(err); }
 
@@ -352,7 +412,7 @@ function lockCreateDir(dirPath, callback, timeout) {
 
             fs.mkdir(dirPath, { recursive: true, mode: 0o770 }, function (err, pathDir) {
 
-                fnUnlock(); callback(err);
+                fnUnlock(); callback(err, pathDir);
             });
         }
 
@@ -365,7 +425,7 @@ function lockCreateDir(dirPath, callback, timeout) {
  */
 function lockDeleteDir(dirPath, callback, timeout) {
 
-    lockFile(dirPath, function (err, fnUnlock) {
+    lockFile(dirPath, function deleteDir(err, fnUnlock) {
 
         if (err) { fnUnlock(); callback(err); }
 
@@ -386,9 +446,7 @@ function lockDeleteDir(dirPath, callback, timeout) {
  */
 function lockAccess(path, callback, timeout) {
 
-    if (lockFiles[path]) { callback(); }
-
-    lockFile(path, function (err, fnUnlock) {
+    lockFile(path, function access(err, fnUnlock) {
 
         if (err) { fnUnlock(); callback(err); }
 
