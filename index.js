@@ -97,7 +97,7 @@ function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
                         if (err) { close(); callback(err); }
                         else {
 
-                            str += buffer.toString(encoding, 0, bytesRead);
+                            buffers.push(buffer.slice(0, bytesRead));
 
                             if (buffer[buffer.byteLength - 1] !== 0) {
 
@@ -107,13 +107,13 @@ function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
                             else {
 
                                 close();
-                                callback(null, str);
+                                callback(null, Buffer.concat(buffers).toString(encoding));
 
                             }
                         }
                     }
 
-                    var str = "", position = 0;
+                    var buffers = [], position = 0;
                     fs.read(fd, { position: position }, cb);
                 }
             });
@@ -164,7 +164,7 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
             }
         }, timeout);
     }
-    else { callback(new Error('Wrong buffer value.')); }
+    else { callback(new Error("fnWriteFile error: typeof buffer > " + typeof buffer)); }
 }
 /**
  * @param {string} filePath
@@ -214,7 +214,7 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                         }
                     });
                 }
-                function fnWriteClose(str, isTruncated, writeCallback) {
+                function fnWriteClose(buffer, isTruncated, writeCallback) {
 
                     // Write file
                     fnOpen(filePath, flag, function (err, fd, fnClose) {
@@ -232,9 +232,9 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                                     fnUnlock();
                                     writeCallback(err);
                                 }
-                                else if (typeof str === 'string') {
+                                else if (buffer) {
 
-                                    fs.write(fd, str, 0, encoding, function (err) {
+                                    fs.write(fd, buffer , 0, encoding, function (err) {
 
                                         fnClose();
                                         fnUnlock();
@@ -243,13 +243,13 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                                 }
                                 else {
                                     fnUnlock();
-                                    writeCallback(new Error("fnWrite error: typeof str === 'string' > " + typeof str));
+                                    writeCallback(new Error("fnWrite error: typeof buffer > " + typeof buffer ));
                                 }
                             }
 
                             if (typeof writeCallback !== "function") { writeCallback = function () { }; }
 
-                            if (str === null) {
+                            if (buffer  === null) {
                                 fnUnlock();
                                 writeCallback();
                             }
@@ -278,7 +278,7 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                             }
                             else {
 
-                                str += buffer.toString(encoding, 0, bytesRead);
+                                buffers.push(buffer.slice(0, bytesRead));
 
                                 if (buffer[buffer.byteLength - 1] !== 0) {
 
@@ -287,13 +287,17 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                                 }
                                 else {
                                     fnClose();
-                                    callback(null, str, fnWriteClose);
+                                    callback(
+                                        null,
+                                        Buffer.concat(buffers).toString(encoding),
+                                        fnWriteClose
+                                    );
 
                                 }
                             }
                         }
 
-                        var str = "", position = 0;
+                        var buffers = [], position = 0;
                         fs.read(fd, { position: position }, cb);
                     }
                 });
