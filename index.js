@@ -55,7 +55,7 @@ function lockFile(filePath, callback, timeout = 500) {
 
                     console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
                     //console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! '" + callback.name + "' File '" + filePath + "' callbacks:", lockFiles[filePath].length);
-                    callback("[ ERROR ] 'file-lockdown' File locker problem. Timeout!", fnUnlock);
+                    callback("[ ERROR ] 'file-lockdown' File locker problem. Timeout!");
                     fnUnlock();
 
                 }, timeout);
@@ -77,7 +77,7 @@ function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
 
     lockFile(filePath, function readFile(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         else {
 
@@ -134,7 +134,7 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
 
         lockFile(filePath, function writeFile(err, fnUnlock) {
 
-            if (err) { fnUnlock(); callback(err); }
+            if (err) { callback(err); }
 
             else {
 
@@ -176,10 +176,7 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
 
     lockFile(filePath, function readWriteFile(err, fnUnlock) {
 
-        if (err) {
-            fnUnlock();
-            callback(err);
-        }
+        if (err) { callback(err); }
 
         else {
 
@@ -220,7 +217,6 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                     fnOpen(filePath, flag, function (err, fd, fnClose) {
 
                         if (err) {
-                            fnClose();
                             fnUnlock();
                             writeCallback(err);
                         }
@@ -263,7 +259,6 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                 fnOpen(filePath, flag, function (err, fd, fnClose) {
 
                     if (err) {
-                        fnClose();
                         fnUnlock();
                         callback(err);
                     }
@@ -319,7 +314,7 @@ function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) 
 
         lockFile(filePath, function appendFile(err, fnUnlock) {
 
-            if (err) { fnUnlock(); callback(err); }
+            if (err) { callback(err); }
 
             else {
 
@@ -364,7 +359,7 @@ function lockDeleteFile(filePath, callback, timeout) {
 
     lockFile(filePath, function deleteFile(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         else {
 
@@ -390,7 +385,7 @@ function lockRename(filePath, newPath, callback, timeout) {
 
     lockFile(filePath, function rename(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         else {
 
@@ -410,7 +405,7 @@ function lockCreateDir(dirPath, callback, timeout) {
 
     lockFile(dirPath, function createDir(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         else {
 
@@ -431,7 +426,7 @@ function lockDeleteDir(dirPath, callback, timeout) {
 
     lockFile(dirPath, function deleteDir(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         else {
 
@@ -452,7 +447,7 @@ function lockAccess(path, callback, timeout) {
 
     lockFile(path, function access(err, fnUnlock) {
 
-        if (err) { fnUnlock(); callback(err); }
+        if (err) { callback(err); }
 
         fs.access(path, fs.constants.F_OK, function (err) {
 
