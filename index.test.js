@@ -4,6 +4,53 @@ var test = require('node:test');
 var path = require('node:path');
 var file_lockdown = require("./index.js");
 
+test('file-lockdown-read-write', { skip: false }, function (t, done) {
+    var filename = 'test_file.txt';
+    var strNumbrid = '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789';
+
+    file_lockdown.directly.lockAppendFile(filename, strNumbrid, function (err) {
+        
+        file_lockdown.directly.lockReadWriteFile(filename, function (err, str, fnWriteClose) {
+
+            fnWriteClose('ABC', true, function (err) {
+
+                file_lockdown.directly.lockReadFile(filename, function (err, data) {
+
+                    if (err) { return done(err); }
+                    if (data === 'ABC') { return done(); }
+                    done('something went wrong');
+                });
+            });
+        });
+    });
+});
+test('file-lockdown-for', { skip: false }, function (t, done) {
+
+    var filename = 'test_file.txt';
+    var count = 1000;
+    var l = count;
+
+    for (var i = 0; i < l; i++) {
+        appendFile(`${i}\n`);
+    }
+
+    function appendFile(str) {
+        file_lockdown.directly.lockAppendFile(filename, str, function (err) {
+            if (err) { done(err); }
+            endCheck();
+        });
+    }
+    function endCheck() {
+
+        count--;
+        if (!count) {
+            file_lockdown.directly.lockDeleteFile(filename, function (err) {
+                setImmediate(done);
+            });
+        }
+    }
+});
+
 function subtest(t, done, ...arg) {
 
     function wait(t, callback) {
@@ -44,9 +91,8 @@ function testChecker(t, done) {
     }
 }
 
-
 var fl = file_lockdown.directly;
-test('file-lockdown', function (t, done) {
+test('file-lockdown', { skip: false }, function (t, done) {
 
     var dirname = 'test_dir';
     var filename = 'test_file.txt';
@@ -170,7 +216,7 @@ test('file-lockdown', function (t, done) {
 });
 
 fl = file_lockdown;
-test('file-lockdown-net', function (t, done) {
+test('file-lockdown-net', { skip: false }, function (t, done) {
 
     var dirname = 'test_dir';
     var filename = 'test_file.txt';

@@ -19,13 +19,10 @@ var lockFiles = {};
 /**
  * @param {string} filePath
  * @param {(err:any,callback:(err:any,fnUnlock:()void)void)void} callback function(err,fnUnlock()=>void){...}
- * @param {number} timeout Default: 500ms
  */
-function lockFile(filePath, callback, timeout = 500) {
+function lockFile(filePath, callback) {
 
     if (typeof callback !== "function") return;
-
-    timeout = typeof timeout === "number" && timeout > 0 ? timeout : 500;
 
     if (lockFiles[filePath]) {
 
@@ -34,46 +31,41 @@ function lockFile(filePath, callback, timeout = 500) {
     else {
 
         lockFiles[filePath] = [];
+        lockFiles[filePath].progress = 0;
+        lockFiles[filePath].push(callback);
 
-        function fnLock(callback) {
+        setImmediate(next);
+        
+        function fnUnlock() {
 
-            function fnUnlock() {
-
-                if (callback.timeout === undefined) { return; }
-
-                clearTimeout(callback.timeout);
-                delete callback.timeout;
-
-                var cb = lockFiles[filePath].shift();
-
-                if (cb) { setImmediate(function () { fnLock(cb); }); }
-                else { delete lockFiles[filePath]; }
+            if (lockFiles[filePath]) {
+                lockFiles[filePath].progress--;
             }
-            function setWatching() {
-
-                callback.timeout = setTimeout(function () {
-
-                    console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! File '" + filePath + "' now unlocked.");
-                    //console.info("[ INFO ] 'file-lockdown' File locker problem. Timeout! '" + callback.name + "' File '" + filePath + "' callbacks:", lockFiles[filePath].length);
-                    callback("[ ERROR ] 'file-lockdown' File locker problem. Timeout!");
-                    fnUnlock();
-
-                }, timeout);
-            }
-
-            setImmediate(function () { setWatching(); callback(null, fnUnlock); });
         }
+        function next() {
 
-        fnLock(callback);
+            if (!lockFiles[filePath]) { return; }
+            if ((lockFiles[filePath].progress > 25)) {
+                return setImmediate(next);
+            }
+
+            var cb = lockFiles[filePath].shift();
+
+            if (cb) {
+                lockFiles[filePath].progress++;
+                cb(null, fnUnlock);
+                next();
+            }
+            else { delete lockFiles[filePath]; }
+        }
     }
 }
 /**
  * @param {string} filePath
  * @param {(err:any,data:Buffer)void} callback function(err,data)
  * @param {string} encoding Default: "utf8"
- * @param {number} timeout 
  */
-function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
+function lockReadFile(filePath, callback, encoding = "utf8") {
 
     lockFile(filePath, function readFile(err, fnUnlock) {
 
@@ -119,16 +111,15 @@ function lockReadFile(filePath, callback, encoding = "utf8", timeout) {
             });
         }
 
-    }, timeout);
+    });
 }
 /**
  * @param {string} filePath
  * @param {Buffer} bufferdata
  * @param {(err:any)void} callback function(err)
  * @param {string} encoding Default: "utf8"
- * @param {number} timeout 
  */
-function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
+function lockWriteFile(filePath, buffer, callback, encoding = "utf8") {
 
     if (buffer !== undefined && buffer !== null) {
 
@@ -162,7 +153,7 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
                     else { fs.ftruncate(fd, 0, write); }
                 });
             }
-        }, timeout);
+        });
     }
     else { callback(new Error("fnWriteFile error: typeof buffer > " + typeof buffer)); }
 }
@@ -170,9 +161,8 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8", timeout) {
  * @param {string} filePath
  * @param {(err:any,buf:Buffer,fnWriteClose:(buf:Buffer,isTruncated:boolean, callback:(err:any)void)void)void} fnRead function(err,data,fnWriteClose(buffer))'buffer'dataforwritingandclose|nullforclose
  * @param {string} encoding Default: "utf8"
- * @param {number} timeout 
  */
-function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
+function lockReadWriteFile(filePath, callback, encoding = "utf8") {
 
     lockFile(filePath, function readWriteFile(err, fnUnlock) {
 
@@ -216,6 +206,8 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                     // Write file
                     fnOpen(filePath, flag, function (err, fd, fnClose) {
 
+                        if (typeof writeCallback !== "function") { writeCallback = function () { }; }
+
                         if (err) {
                             fnUnlock();
                             writeCallback(err);
@@ -225,6 +217,7 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                             function fnWrite(err) {
 
                                 if (err) {
+                                    fnClose();
                                     fnUnlock();
                                     writeCallback(err);
                                 }
@@ -238,14 +231,14 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
                                     });
                                 }
                                 else {
+                                    fnClose();
                                     fnUnlock();
                                     writeCallback(new Error("fnWrite error: typeof buffer > " + typeof buffer ));
                                 }
                             }
 
-                            if (typeof writeCallback !== "function") { writeCallback = function () { }; }
-
-                            if (buffer  === null) {
+                            if (buffer === null) {
+                                fnClose();
                                 fnUnlock();
                                 writeCallback();
                             }
@@ -299,19 +292,18 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8", timeout) {
             });
         }
 
-    }, timeout);
+    });
 }
 /**
  * @param {string} filePath
  * @param {Buffer} buffer
  * @param {(err:any)void} callback function(err)
  * @param {string} encoding Default: "utf8"
- * @param {number} timeout 
  */
-function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) {
+function lockAppendFile(filePath, buffer, callback, encoding = "utf8") {
 
     if (buffer !== undefined && buffer !== null) {
-
+        
         lockFile(filePath, function appendFile(err, fnUnlock) {
 
             if (err) { callback(err); }
@@ -346,16 +338,15 @@ function lockAppendFile(filePath, buffer, callback, encoding = "utf8", timeout) 
                 });
             }
 
-        }, timeout);
+        });
     }
     else { callback(new Error('Wrong buffer value.')); }
 }
 /**
  * @param {string} filePath
  * @param {(err:any)void} callback function(err)
- * @param {number} timeout
  */
-function lockDeleteFile(filePath, callback, timeout) {
+function lockDeleteFile(filePath, callback) {
 
     lockFile(filePath, function deleteFile(err, fnUnlock) {
 
@@ -373,15 +364,14 @@ function lockDeleteFile(filePath, callback, timeout) {
                 fnUnlock(); callback(err);
             });
         }
-    }, timeout);
+    });
 }
 /**
  * @param {string} filePath
  * @param {string} newPath
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockRename(filePath, newPath, callback, timeout) {
+function lockRename(filePath, newPath, callback) {
 
     lockFile(filePath, function rename(err, fnUnlock) {
 
@@ -394,14 +384,13 @@ function lockRename(filePath, newPath, callback, timeout) {
                 fnUnlock(); callback(err);
             });
         }
-    }, timeout);
+    });
 }
 /**
  * @param {string} dirPath
  * @param {(err:any, pathDir:string)void} callback
- * @param {number} timeout
  */
-function lockCreateDir(dirPath, callback, timeout) {
+function lockCreateDir(dirPath, callback) {
 
     lockFile(dirPath, function createDir(err, fnUnlock) {
 
@@ -415,14 +404,13 @@ function lockCreateDir(dirPath, callback, timeout) {
             });
         }
 
-    }, timeout);
+    });
 }
 /**
  * @param {string} dirPath
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockDeleteDir(dirPath, callback, timeout) {
+function lockDeleteDir(dirPath, callback) {
 
     lockFile(dirPath, function deleteDir(err, fnUnlock) {
 
@@ -436,14 +424,13 @@ function lockDeleteDir(dirPath, callback, timeout) {
             });
         }
 
-    }, timeout);
+    });
 }
 /**
  * @param {string} path
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockAccess(path, callback, timeout) {
+function lockAccess(path, callback) {
 
     lockFile(path, function access(err, fnUnlock) {
 
@@ -454,7 +441,7 @@ function lockAccess(path, callback, timeout) {
             fnUnlock(); callback(err);
         })
 
-    }, timeout);
+    });
 }
 
 
