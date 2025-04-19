@@ -1,108 +1,205 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>file-lockdown: Library that handle file locking.</title>
+    <title>Table of contents</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css" />
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" />
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <style>
+        #list-headers ul {
+            list-style: none;
+            padding-left: .5em;
+        }
+        #list-headers > ul {
+            padding: 0;
+        }
+        #list-headers h1, h2, h3, h4, h5 {
+            white-space: nowrap;
+        }
+        .markdown-body {
+            padding-left: 2em;
+        }
+        @media (min-width: 992px) {
+            .vh-lg-100{
+                height: 100vh !important;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <h1 id="file-lockdown-library-that-handle-file-locking">file-lockdown: Library that handle file locking.</h1>
-<p><a href="https://www.npmjs.com/package/file-lockdown"><img src="https://badgen.net/npm/v/file-lockdown" alt="npm-version" /></a>
-<a href="https://www.npmjs.com/package/file-lockdown"><img src="https://badgen.net/npm/dw/file-lockdown" alt="npm-week-downloads" /></a></p>
-<p>Library that handle file locking.
-The library is designed for <a href="https://www.npmjs.com/package/fs-broker">'fs-broker'</a>.
-Allows you to communicate with background processes over the 'net' module.
-The callback APIs perform all operations asynchronously, without blocking the event loop, then invoke a callback function upon completion or error.</p>
+    <div class="row w-100">
+<div class="col-lg-3 d-lg-inline">
+<div class="sticky-top overflow-auto vh-lg-100">
+<div id="list-headers" class="list-group mt-2 ms-lg-2 ms-4">
+<h4 id="table-of-contents">Table of contents</h4>
+<ul>
+<li><a href="#file-lockdown"><strong>File Lockdown</strong></a></li>
+<li><a href="#installation"><strong>Installation</strong></a></li>
+<li><a href="#basic-usage"><strong>Basic Usage</strong></a></li>
+<li><a href="#how-it-works"><strong>How It Works</strong></a></li>
+<li><a href="#key-features"><strong>Key Features</strong></a></li>
+<li><a href="#config-sets"><strong>Config Sets</strong></a></li>
+<li><a href="#reference"><strong>Reference</strong></a>
+<ul>
+<li><a href="#lockfile">lockFile</a></li>
+<li><a href="#lockreadfile">lockReadFile</a></li>
+<li><a href="#lockwritefile">lockWriteFile</a></li>
+<li><a href="#lockreadwritefile">lockReadWriteFile</a></li>
+<li><a href="#lockappendfile">lockAppendFile</a></li>
+<li><a href="#lockdeletefile">lockDeleteFile</a></li>
+<li><a href="#lockrename">lockRename</a></li>
+<li><a href="#lockcreatedir">lockCreateDir</a></li>
+<li><a href="#lockdeletedir">lockDeleteDir</a></li>
+<li><a href="#lockaccess">lockAccess</a></li>
+</ul>
+</li>
+<li><a href="#license"><strong>License</strong></a></li>
+</ul>
+</div>
+</div>
+</div>
+ 
+<div class="col-lg-9 mt-2">
+<div class="ps-4 markdown-body" data-bs-spy="scroll" data-bs-target="#list-headers" data-bs-offset="0" tabindex="0">
+<h1 id="file-lockdown">File Lockdown</h1>
+<p><strong>File Lockdown</strong> is a library designed to handle file locking and asynchronous file operations.
+It is built for use with <a href="https://www.npmjs.com/package/fs-broker"><code>fs-broker</code></a> and allows communication with background processes via the <a href="https://www.npmjs.com/package/net-fn"><code>net-fn</code></a> module.
+The library ensures thread safety and provides a robust API for managing file operations without blocking the event loop.</p>
+<p>This manual is also available in <a href="https://manuel-lohmus.github.io/file-lockdown/README.html">HTML5 format</a>.</p>
+<hr />
 <h2 id="installation">Installation</h2>
+<p>Install the library using npm:</p>
 <p><code>npm install file-lockdown</code></p>
-<h2 id="usage-example">Usage example</h2>
-<pre><code class="language-js">var file_lock = require(&quot;file-lockdown&quot;);
+<hr />
+<h2 id="basic-usage">Basic Usage</h2>
+<p>Here’s a simple example of how to use the library:</p>
+<pre><code class="language-javascript">var file_lock = require(&quot;file-lockdown&quot;);
 setTimeout(function () {
     file_lock.lockAppendFile(&quot;./test.txt&quot;, &quot;1 test\r\n&quot;, function (err) {
         if (err) { console.error(err); }
     });
 }, 100);
 </code></pre>
-<h2 id="file-lockdown-reference">'file-lockdown' Reference</h2>
-<pre><code class="language-js">/**
+<hr />
+<h2 id="how-it-works">How It Works</h2>
+<p>The library uses a locking mechanism to ensure that file operations are serialized for the same file. This prevents race conditions and ensures thread safety.</p>
+<ol>
+<li>A <code>lockFiles</code> object tracks the state of locked files.</li>
+<li>If a file is already locked, the callback is queued.</li>
+<li>If the file is not locked, it is locked, and queued callbacks are processed sequentially using the <code>next</code> function.</li>
+<li>A <code>fnUnlock</code> function is provided to release the lock after the operation is complete.</li>
+</ol>
+<hr />
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Thread Safety</strong>: Ensures that file operations are serialized for the same file.</li>
+<li><strong>Asynchronous Operations</strong>: All operations are non-blocking and use callbacks.</li>
+<li><strong>IPC Support</strong>: Allows communication with background processes via the <code>net</code> module.</li>
+<li><strong>Configurable Behavior</strong>: Options like <code>enableSyncWrites</code> provide flexibility for synchronous or asynchronous writes.</li>
+</ul>
+<hr />
+<h2 id="config-sets">Config Sets</h2>
+<ul>
+<li><strong>enableSyncWrites</strong>: Enable synchronous writing. This is safer than asynchronous writing. (added with version 1.2)</li>
+<li><strong>ipc_port</strong>: Port number. See more about <a href="https://www.npmjs.com/package/net-fn"><code>net-fn</code></a> connection.</li>
+<li><strong>ipc_host</strong>: Hostname.See more about <a href="https://www.npmjs.com/package/net-fn"><code>net-fn</code></a> connection.</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;production&quot;: {
+    &quot;file_lockdown&quot;: {
+      &quot;enableSyncWrites&quot;: false,
+      &quot;ipc_port&quot;: 8021,
+      &quot;ipc_host&quot;: &quot;localhost&quot;
+    }
+  }
+}
+</code></pre>
+<h2 id="reference">Reference</h2>
+<p>Below is a list of the available functions and their usage:</p>
+<h3 id="lockfile"><code>lockFile</code></h3>
+<p>Locks a file for exclusive access.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {(err:any,callback:(err:any,fnUnlock:()void)void)void} callback function(err,fnUnlock()=&gt;void){...}
- * @param {number} timeout Default: 500ms
  */
-function lockFile(filePath, callback, timeout = 500)
-
-/**
+function lockFile(filePath, callback)
+</code></pre>
+<h3 id="lockreadfile"><code>lockReadFile</code></h3>
+<p>Reads a file while ensuring it is locked during the operation.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {(err:any,data:Buffer)void} callback function(err,data)
  * @param {string} encoding Default: &quot;utf8&quot;
- * @param {number} timeout 
  */
-function lockReadFile(filePath, callback, encoding = &quot;utf8&quot;, timeout)
-
-/**
+function lockReadFile(filePath, callback, encoding = &quot;utf8&quot;)
+</code></pre>
+<h3 id="lockwritefile"><code>lockWriteFile</code></h3>
+<p>Writes data to a file, optionally truncating it first.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {Buffer} bufferdata
  * @param {(err:any)void} callback function(err)
  * @param {string} encoding Default: &quot;utf8&quot;
- * @param {number} timeout 
  */
-function lockWriteFile(filePath, buffer, callback, encoding = &quot;utf8&quot;, timeout)
-
-/**
+function lockWriteFile(filePath, buffer, callback, encoding = &quot;utf8&quot;)
+</code></pre>
+<h3 id="lockreadwritefile"><code>lockReadWriteFile</code></h3>
+<p>Combines reading and writing operations on a file.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {(err:any,buf:Buffer,fnWriteClose:(buf:Buffer,isTruncated:boolean, callback:(err:any)void)void)void} fnRead function(err,data,fnWriteClose(buffer))'buffer'dataforwritingandclose|nullforclose
  * @param {string} encoding Default: &quot;utf8&quot;
- * @param {number} timeout 
  */
-function lockReadWriteFile(filePath, callback, encoding = &quot;utf8&quot;, timeout)
-
-/**
+function lockReadWriteFile(filePath, callback, encoding = &quot;utf8&quot;,)
+</code></pre>
+<h3 id="lockappendfile"><code>lockAppendFile</code></h3>
+<p>Appends data to a file, creating it if it doesn't exist.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {Buffer} buffer
  * @param {(err:any)void} callback function(err)
  * @param {string} encoding Default: &quot;utf8&quot;
- * @param {number} timeout 
  */
-function lockAppendFile(filePath, buffer, callback, encoding = &quot;utf8&quot;, timeout)
-
-/**
- * @param {string} filePath
- * @param {Buffer} buffer
- * @param {(err:any)void} callback function(err)
- * @param {string} encoding Default: &quot;utf8&quot;
- * @param {number} timeout 
- */
-function lockAppendFile(filePath, buffer, callback, encoding = &quot;utf8&quot;, timeout)
-
-/**
+function lockAppendFile(filePath, buffer, callback, encoding = &quot;utf8&quot;)
+</code></pre>
+<h3 id="lockdeletefile"><code>lockDeleteFile</code></h3>
+<p>Deletes a file.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {(err:any)void} callback function(err)
- * @param {number} timeout
  */
-function lockDeleteFile(filePath, callback, timeout)
-
-/**
+function lockDeleteFile(filePath, callback)
+</code></pre>
+<h3 id="lockrename"><code>lockRename</code></h3>
+<p>Renames a file.</p>
+<pre><code class="language-javascript">/**
  * @param {string} filePath
  * @param {string} newPath
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockRename(filePath, newPath, callback, timeout)
-
-/**
+function lockRename(filePath, newPath, callback)
+</code></pre>
+<h3 id="lockcreatedir"><code>lockCreateDir</code></h3>
+<p>Creates a directory recursively.</p>
+<pre><code class="language-javascript">/**
  * @param {string} dirPath
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockCreateDir(dirPath, callback, timeout)
-
-/**
+function lockCreateDir(dirPath, callback)
+</code></pre>
+<h3 id="lockdeletedir"><code>lockDeleteDir</code></h3>
+<p>Deletes a directory recursively.</p>
+<pre><code class="language-javascript">/**
  * @param {string} dirPath
  * @param {(err:any)void} callback
- * @param {number} timeout
  */
-function lockDeleteDir(dirPath, callback, timeout)
-
-/**
+function lockDeleteDir(dirPath, callback)
+</code></pre>
+<h3 id="lockaccess"><code>lockAccess</code></h3>
+<p>Checks if a file or directory exists.</p>
+<pre><code class="language-javascript">/**
  * @param {string} path
  * @param {(err:any)void} callback
  * @param {number} timeout
@@ -110,30 +207,29 @@ function lockDeleteDir(dirPath, callback, timeout)
 function lockAccess(path, callback, timeout)
 </code></pre>
 <h2 id="license">License</h2>
-<p>The MIT License <a href="LICENSE">MIT</a></p>
-<pre><code class="language-txt">The MIT License (MIT)
+<p>This project is licensed under the MIT License.</p>
+<p>Copyright © Manuel Lõhmus</p>
+<br>
+<br>
+<br>
+</div>
+</div>
+</div>
 
-Copyright (c) 2021 Manuel Lõhmus &lt;manuel@hauss.ee&gt;
+    <script>
+        (function () {
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the &quot;Software&quot;), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+            'use strict';
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+            var isIE = !!document.documentMode; // Detect IE
 
-THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-</code></pre>
+            if (!isIE) {
 
-
+                // list-group style for headers
+                document.querySelectorAll('#list-headers a')
+                    .forEach(function (a) { a.classList.add('list-group-item', 'list-group-item-action') });
+            }
+        })();
+    </script>
 </body>
 </html>

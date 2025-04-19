@@ -1,7 +1,7 @@
 {
   "name": "file-lockdown",
-  "version": "1.1.6",
-  "description": "Library that handle file locking",
+  "version": "1.2.0",
+  "description": "A robust library for file locking and asynchronous file operations, designed for thread safety and inter-process communication using the 'net' module.",
   "keywords": [
     "file",
     "lockdown",
@@ -11,7 +11,7 @@
     "processes",
     "net"
   ],
-  "author": "Manuel Lõhmus <manuel@hauss.ee>",
+  "author": "Manuel Lõhmus",
   "license": "MIT",
   "main": "index.js",
   "browser": "browser.js",
@@ -24,8 +24,7 @@
     "index.test.js",
     "LICENSE",
     "package.json",
-    "README.md",
-    "README.html"
+    "README.md"
   ],
   "homepage": "https://github.com/manuel-lohmus/file-lockdown#readme",
   "bugs": "https://github.com/manuel-lohmus/file-lockdown/issues",

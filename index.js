@@ -1,9 +1,10 @@
-/**File locking functions. @preserve Copyright (c) 2021 Manuel Lõhmus.*/
+/**File locking functions. @preserve Copyright (c) 2021 Manuel LÃµhmus.*/
 "use strict";
 
 var confSet = require("config-sets");
 var options = confSet.init({
     file_lockdown: {
+        enableSyncWrites: false,
         ipc_port: 8021,
         ipc_host: "localhost"
     }
@@ -140,11 +141,22 @@ function lockWriteFile(filePath, buffer, callback, encoding = "utf8") {
                         if (err) { close(); callback(err); }
 
                         else {
-                            fs.write(fd, buffer, 0, encoding, function (err) {
 
+                            if (options.enableSyncWrites) {
+
+                                fs.writeSync(fd, buffer, 0, encoding);
                                 close();
-                                callback(err);
-                            });
+                                callback();
+                            }
+
+                            else {
+
+                                fs.write(fd, buffer, 0, encoding, function (err) {
+                                
+                                    close();
+                                    callback(err);
+                                });
+                            }
                         }
                     }
 
@@ -223,12 +235,23 @@ function lockReadWriteFile(filePath, callback, encoding = "utf8") {
                                 }
                                 else if (buffer) {
 
-                                    fs.write(fd, buffer , 0, encoding, function (err) {
+                                    if (options.enableSyncWrites) {
 
+                                        fs.writeSync(fd, buffer, 0, encoding);
                                         fnClose();
                                         fnUnlock();
                                         writeCallback(err);
-                                    });
+                                    }
+
+                                    else {
+
+                                        fs.write(fd, buffer, 0, encoding, function (err) {
+
+                                            fnClose();
+                                            fnUnlock();
+                                            writeCallback(err);
+                                        });
+                                    }
                                 }
                                 else {
                                     fnClose();
