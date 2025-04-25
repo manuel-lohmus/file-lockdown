@@ -1,7 +1,7 @@
 {
   "production": {
     "file_lockdown": {
-      "enableSyncWrites": true,
+      "enableSyncWrites": false,
       "ipc_port": 8021,
       "ipc_host": "localhost"
     },

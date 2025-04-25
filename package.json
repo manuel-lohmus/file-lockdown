@@ -1,6 +1,6 @@
 {
   "name": "file-lockdown",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A robust library for file locking and asynchronous file operations, designed for thread safety and inter-process communication using the 'net' module.",
   "keywords": [
     "file",

@@ -1,4 +1,4 @@
-/**File locking functions. @preserve Copyright (c) 2021 Manuel Lõhmus.*/
+/**  Copyright (c) Manuel Lõhmus (MIT License). */
 "use strict";
 
 var confSet = require("config-sets");
@@ -32,31 +32,22 @@ function lockFile(filePath, callback) {
     else {
 
         lockFiles[filePath] = [];
-        lockFiles[filePath].progress = 0;
         lockFiles[filePath].push(callback);
 
         setImmediate(next);
         
         function fnUnlock() {
 
-            if (lockFiles[filePath]) {
-                lockFiles[filePath].progress--;
-            }
+            //process.nextTick(next);
+            setTimeout(next);
         }
         function next() {
 
             if (!lockFiles[filePath]) { return; }
-            if ((lockFiles[filePath].progress > 25)) {
-                return setImmediate(next);
-            }
 
             var cb = lockFiles[filePath].shift();
 
-            if (cb) {
-                lockFiles[filePath].progress++;
-                cb(null, fnUnlock);
-                next();
-            }
+            if (cb) { cb(null, fnUnlock); }
             else { delete lockFiles[filePath]; }
         }
     }
